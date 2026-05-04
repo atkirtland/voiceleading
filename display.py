@@ -1,7 +1,7 @@
 from pathlib import Path
 import music21 as m21
 
-def export_to_music21(sequence, output_name="voice_leading"):
+def export_to_music21(sequence, output_name="voice_leading", save_midi=True, display=False):
     """
     Converts a sequence of Z3 MIDI chords into a standard SATB score and MIDI file.
     Sequence format expected: [[Bass, Tenor, Alto, Soprano], ...]
@@ -50,10 +50,34 @@ def export_to_music21(sequence, output_name="voice_leading"):
     #
     # Output
     #
-        
-    midi_path = f"{output_name}.mid"
-    score.write('midi', fp=midi_path)
-    print(f"MIDI saved to: {midi_path}")
+    if save_midi:
+        midi_path = f"{output_name}.mid"
+        score.write('midi', fp=midi_path)
+        print(f"MIDI saved to: {midi_path}")
     
-    print("Opening sheet music visualization...")
-    score.show()
+    if display:
+        print("Opening sheet music visualization...")
+        score.show()
+
+def export_scala_file(edo, filename="tuning"):
+    """
+    Generates a Scala (.scl) file for a given Equal Temperament system.
+    """
+    filepath = f"{filename}.scl"
+    cents_per_step = 1200.0 / edo
+    
+    with open(filepath, 'w') as f:
+        # 1. Standard Scala header
+        f.write(f"! {filename}.scl\n")
+        f.write(f"! Generated from Z3 optimization\n")
+        f.write(f"{edo} Equal Divisions of the Octave\n")
+        f.write(f" {edo}\n")
+        f.write("!\n")
+        
+        # 2. Write the scale degrees (Scala format omits the 0 cents starting point)
+        for step in range(1, edo + 1):
+            cents_value = step * cents_per_step
+            # Scala requires cents to have a decimal point
+            f.write(f" {cents_value:.5f}\n")
+            
+    print(f"Scala tuning file saved to: {filepath}")
