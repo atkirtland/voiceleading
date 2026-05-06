@@ -1,28 +1,7 @@
 from z3 import *
 from display import export_to_music21, export_scala_file
+from chords import build_universal_scale, build_chords
 
-def get_chord_pcs(numeral, root_pc=0, edo=12):
-    # Example dictionary for 31-TET
-    if edo == 31:
-        harmony = {
-            "I":   [0, 10, 18],     # Major
-            "ii":  [5, 13, 23],     # Minor starting on step 5 (Major 2nd)
-            "IV":  [13, 23, 31],    # Major starting on step 13 (Perfect 4th)
-            "V":   [18, 28, 5],     # Major starting on step 18 (Perfect 5th)
-        }
-    elif edo == 12:
-        harmony = {
-            "I":    [0, 4, 7],     # Major (Root, M3, P5)
-            "ii":   [2, 5, 9],     # Minor (M2, m3, P5)
-            "iii":  [4, 7, 11],    # Minor (M3, m3, P5)
-            "IV":   [5, 9, 12],    # Major (P4, M3, P5)
-            "V":    [7, 11, 14],   # Major (P5, M3, P5)
-            "V7":   [7, 11, 14, 17], # Dominant 7th (P5, M3, P5, m7)
-            "vi":   [9, 12, 16],   # Minor (M6, m3, P5)
-            "vii°": [11, 14, 17]   # Diminished (M7, m3, d5)
-        }
-        
-    return [(pc + root_pc) % edo for pc in harmony[numeral]]
 
 """
 Returns all MIDI notes matching a pitch class within a specific range.
@@ -224,23 +203,19 @@ def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", 
 
         return None
 
+NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
+
 if __name__ == "__main__":
+    diatonic_12 = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1]}
+    scale_12 = build_universal_scale(**diatonic_12)
+    chords_12 = build_chords(scale_12["Pitches"], edo=12, chord_size=3)
+    diatonic_12_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_12)}
+    # C Major (I) -> A Minor (vi) -> F Major (IV) -> G Major (V) -> C Major (I)
+    progression = ["I", "VI", "IV", "V", "I"]
+    Cmajprog_pcs = [diatonic_12_chords[numeral] for numeral in progression]
+
     # C Major in 4 voices: C3 (48), G3 (55), C4 (60), E4 (64)
     Cmaj = [48, 55, 60, 64]
-    # F Major pitch classes: F=5, A=9, C=0
-    Fmaj_pcs = [[48%12, 55%12, 64%12], [5, 9, 0]]
-
-    # C Major (I) -> A Minor (vi) -> F Major (IV) -> G Major (V) -> C Major (I)
-    # Cmajprog_pcs = [
-    #     [0, 4, 7],  # Step 0: C, E, G
-    #     [9, 0, 4],  # Step 1: A, C, E
-    #     [5, 9, 0],  # Step 2: F, A, C
-    #     [7, 11, 2], # Step 3: G, B, D
-    #     [0, 4, 7]   # Step 4: C, E, G
-    # ]
-    progression = ["I", "vi", "IV", "V", "I"]
-    # progression = ["I", "vi", "IV", "V"]
-    Cmajprog_pcs = [get_chord_pcs(chord, root_pc=0, edo=12) for chord in progression]
 
     voice_ranges = {
         0: (36, 53), # Bass: C2 to F3
