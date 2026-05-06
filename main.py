@@ -74,7 +74,7 @@ def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", 
             minv, maxv = ranges[v]
             valid_note_conditions = []
             for pc in target_pcs:
-                valid_notes = get_valid_midi_notes(pc, minv, maxv)
+                valid_notes = get_valid_midi_notes(pc, minv, maxv, edo=edo)
                 for note in valid_notes:
                     valid_note_conditions.append(voices[t][v] == note)
             opt.add(Or(valid_note_conditions))
@@ -86,7 +86,7 @@ def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", 
             pc_present_conditions = []
             for v in range(num_voices):
                 min_val, max_val = ranges[v]
-                valid_notes = get_valid_midi_notes(pc, min_val, max_val)
+                valid_notes = get_valid_midi_notes(pc, min_val, max_val, edo=edo)
                 for note in valid_notes:
                     pc_present_conditions.append(voices[t][v] == note)
             opt.add(Or(pc_present_conditions))
@@ -242,7 +242,10 @@ NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
 
 if __name__ == "__main__":
 
-    # # example 1: C major progression
+    #
+    # C major progression
+    #
+
     # diatonic_cmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
     # scale_cmaj = build_universal_scale(**diatonic_cmaj)
     # chords_cmaj = build_chords(scale_cmaj["Pitches"], edo=12, chord_size=3, tonic=0)
@@ -261,12 +264,15 @@ if __name__ == "__main__":
     # export_to_music21(sequence_data, output_name="cmaj", save_midi=True, display=True)
     # export_scala_file(12, "12_EDO")
 
-    # # Pachelbel's Canon in D major
+    # 
+    # Pachelbel's Canon in D major
+    #
+
     # diatonic_dmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 2}
     # scale_dmaj = build_universal_scale(**diatonic_dmaj)
     # chords_dmaj = build_chords(scale_dmaj["Pitches"], edo=12, chord_size=3, tonic=2)
     # diatonic_dmaj_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_dmaj)}
-
+    #
     # pachelbel_progression = ["I", "V", "VI", "III", "IV", "I", "IV", "V"]
     # pachelbel_pcs = [diatonic_dmaj_chords[numeral] for numeral in pachelbel_progression]
     # # D major in 4 voices: D3(50), A3(57), D4(62), F#4(66)
@@ -277,7 +283,7 @@ if __name__ == "__main__":
     #     2: (54, 73),  # Alto: F#3 to C#5
     #     3: (62, 81),  # Soprano: D4 to A5
     # }
-
+    #
     # def pachelbel_constraints(opt, voices):
     #     # Pin the bass to the root of each chord (ground bass / basso ostinato)
     #     for t, chord_pcs in enumerate(pachelbel_pcs):
@@ -285,13 +291,15 @@ if __name__ == "__main__":
     #         bass_min, bass_max = pachelbel_ranges[0]
     #         bass_candidates = get_valid_midi_notes(root_pc, bass_min, bass_max)
     #         opt.add(Or([voices[t][0] == note for note in bass_candidates]))
-
+    #
     # sequence_data = generate_efficient_voice_leading(Dmaj, pachelbel_pcs, metric="L1", ranges=pachelbel_ranges, optimize=True, extra_constraints=pachelbel_constraints, edo=12)
     # export_to_music21(sequence_data, output_name="pachelbel", save_midi=True, display=True, edo=12)
     # export_scala_file(12, "12_EDO")
 
-    # #
-    # # Circle of Fifths Descent in C major: I–IV–VII–III–VI–II–V–I
+    #
+    # Circle of Fifths Descent in C major: I–IV–VII–III–VI–II–V–I
+    #
+
     # # Each chord's root descends by a perfect fifth (equivalently, ascends by a fourth).
     # # This exhausts every diatonic chord and is a rigorous stress-test for the
     # # parallel-fifths rule, especially around the diminished VII° chord.
@@ -314,31 +322,34 @@ if __name__ == "__main__":
     # export_to_music21(sequence_data, output_name="circle_of_fifths", save_midi=True, display=True, edo=12)
     # export_scala_file(12, "12_EDO")
 
-    # # 31-EDO Diatonic Progression: I–VI–IV–V–I (the "50s progression" in 31-EDO)
-    # # 31-EDO is a meantone temperament where major thirds are 10 steps (≈ 387 cents),
-    # # extremely close to the just 5/4 ratio (386.3 cents), vs. 12-EDO's 400 cents.
-    # # Voice values and pitch classes are all in 31-EDO steps; one octave = 31 steps.
-    # # Reference: C4 = step 124  (4 octaves * 31 steps/octave)
-    # diatonic_31 = {"edo": 31, "generators": [18], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
-    # scale_31 = build_universal_scale(**diatonic_31)
-    # chords_31 = build_chords(scale_31["Pitches"], edo=31, chord_size=3, tonic=0)
-    # diatonic_31_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_31)}
-    # print("31-EDO scale pitches:", scale_31["Pitches"])
-    # print("31-EDO chord pcs — I:", diatonic_31_chords["I"],
-    #       " IV:", diatonic_31_chords["IV"],
-    #       " V:", diatonic_31_chords["V"],
-    #       " VI:", diatonic_31_chords["VI"])
-    # progression_31 = ["I", "VI", "IV", "V", "I"]
-    # pcs_31 = [diatonic_31_chords[numeral] for numeral in progression_31]
-    # # Starting voicing: C3(93) G3(111) C4(124) E4(134) in 31-EDO steps
-    # # C_n = n * 31;  G above C = +18 steps;  E above C = +10 steps
-    # C_31 = [93, 111, 124, 134]
-    # ranges_31 = {
-    #     0: (62, 99),   # Bass:    ~C2 (62) to G3 (99)
-    #     1: (93, 124),  # Tenor:   ~C3 (93) to C4 (124)
-    #     2: (111, 142), # Alto:    ~G3 (111) to G4 (142)
-    #     3: (124, 155), # Soprano: ~C4 (124) to C5 (155)
-    # }
-    # sequence_data_31 = generate_efficient_voice_leading(C_31, pcs_31, metric="L1", ranges=ranges_31, optimize=True, edo=31)
-    # export_to_music21(sequence_data_31, output_name="31edo_diatonic", save_midi=True, display=True, edo=31)
-    # export_scala_file(31, "31_EDO")
+    # 
+    # 31-EDO Diatonic Progression: I–VI–IV–V–I (the "50s progression" in 31-EDO)
+    #
+
+    # 31-EDO is a meantone temperament where major thirds are 10 steps (≈ 387 cents),
+    # extremely close to the just 5/4 ratio (386.3 cents), vs. 12-EDO's 400 cents.
+    # Voice values and pitch classes are all in 31-EDO steps; one octave = 31 steps.
+    # Reference: C4 = step 124  (4 octaves * 31 steps/octave)
+    diatonic_31 = {"edo": 31, "generators": [18], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
+    scale_31 = build_universal_scale(**diatonic_31)
+    chords_31 = build_chords(scale_31["Pitches"], edo=31, chord_size=3, tonic=0)
+    diatonic_31_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_31)}
+    print("31-EDO scale pitches:", scale_31["Pitches"])
+    print("31-EDO chord pcs — I:", diatonic_31_chords["I"],
+          " IV:", diatonic_31_chords["IV"],
+          " V:", diatonic_31_chords["V"],
+          " VI:", diatonic_31_chords["VI"])
+    progression_31 = ["I", "VI", "IV", "V", "I"]
+    pcs_31 = [diatonic_31_chords[numeral] for numeral in progression_31]
+    # Starting voicing: C3(93) G3(111) C4(124) E4(134) in 31-EDO steps
+    # C_n = n * 31;  G above C = +18 steps;  E above C = +10 steps
+    C_31 = [93, 111, 124, 134]
+    ranges_31 = {
+        0: (62, 99),   # Bass:    ~C2 (62) to G3 (99)
+        1: (93, 124),  # Tenor:   ~C3 (93) to C4 (124)
+        2: (111, 142), # Alto:    ~G3 (111) to G4 (142)
+        3: (124, 155), # Soprano: ~C4 (124) to C5 (155)
+    }
+    sequence_data_31 = generate_efficient_voice_leading(C_31, pcs_31, metric="L1", ranges=ranges_31, optimize=True, edo=31)
+    export_to_music21(sequence_data_31, output_name="31edo_diatonic", save_midi=True, display=False, edo=31)
+    export_scala_file(31, "31_EDO")
