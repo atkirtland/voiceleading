@@ -43,5 +43,36 @@ class TestPachelbelBassLine(unittest.TestCase):
         self.assertEqual(bass_line, EXPECTED_BASS)
 
 
+class TestCircleOfFifthsStructure(unittest.TestCase):
+
+    def test_roots_descend_by_diatonic_fifth(self):
+        """The defining property of a circle-of-fifths progression: each chord root
+        is a diatonic fifth (3 scale degrees) below the previous one. In a major scale
+        this is 7 semitones everywhere except IV→VII, where the diatonic fifth is
+        diminished (6 semitones) — the one tritone in the scale."""
+        diatonic_cmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
+        scale_cmaj = build_universal_scale(**diatonic_cmaj)
+        chords_cmaj = build_chords(scale_cmaj["Pitches"], edo=12, chord_size=3, tonic=0)
+        diatonic_cmaj_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_cmaj)}
+        circle_progression = ["I", "IV", "VII", "III", "VI", "II", "V", "I"]
+        circle_pcs = [diatonic_cmaj_chords[numeral] for numeral in circle_progression]
+
+        scale_pcs = scale_cmaj["Pitches"]  # ordered list of pitch classes in the scale
+        n = len(scale_pcs)
+
+        for i in range(len(circle_pcs) - 1):
+            prev_root = circle_pcs[i][0]
+            curr_root = circle_pcs[i + 1][0]
+            prev_idx = scale_pcs.index(prev_root)
+            curr_idx = scale_pcs.index(curr_root)
+            # Descending by a diatonic fifth = moving back 4 scale steps (mod 7).
+            # A fifth spans 5 note names (e.g. C–B–A–G–F), so 4 steps separate root from root.
+            descent_in_degrees = (prev_idx - curr_idx) % n
+            self.assertEqual(
+                descent_in_degrees, 4,
+                f"Step {i}→{i+1}: root {prev_root}→{curr_root} is not a descending diatonic fifth"
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

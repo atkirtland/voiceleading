@@ -3,7 +3,7 @@ import music21 as m21
 
 OUTPUT_DIR = Path(__file__).parent / "output"
 
-def export_to_music21(sequence, output_name="voice_leading", save_midi=True, display=False):
+def export_to_music21(sequence, output_name="voice_leading", save_midi=True, display=False, edo=12):
     """
     Converts a sequence of Z3 MIDI chords into a standard SATB score and MIDI file.
     Sequence format expected: [[Bass, Tenor, Alto, Soprano], ...]
@@ -37,12 +37,21 @@ def export_to_music21(sequence, output_name="voice_leading", save_midi=True, dis
     parts[2].append(m21.clef.TrebleClef())
     parts[3].append(m21.clef.TrebleClef())
     
-    # Map the Z3 integers to music21 Note objects
+    # Map the Z3 integers to music21 Note objects.
+    # For non-12-EDO tunings the voice values are EDO steps, not raw MIDI numbers.
+    # We convert via cents: step * (1200 / edo) cents above MIDI 0, then split into
+    # an integer MIDI semitone plus a microtonal adjustment in cents.
+    cents_per_step = 1200.0 / edo
     for chord_voicing in sequence:
-        for i, midi_pitch in enumerate(chord_voicing):
+        for i, step in enumerate(chord_voicing):
+            total_cents = step * cents_per_step
+            midi_int = int(total_cents / 100)          # nearest semitone below
+            microtone_cents = total_cents - midi_int * 100
             n = m21.note.Note()
-            n.pitch.midi = midi_pitch
-            n.quarterLength = 1.0  # Assigns each chord a duration of 1 beat (quarter note)
+            n.pitch.midi = midi_int
+            if abs(microtone_cents) > 0.01:
+                n.pitch.microtone = m21.pitch.Microtone(microtone_cents)
+            n.quarterLength = 1.0
             parts[i].append(n)
             
     # Stack the parts into the master score
