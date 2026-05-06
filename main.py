@@ -1,3 +1,4 @@
+import math
 from z3 import *
 from display import export_to_music21, export_scala_file
 from chords import build_universal_scale, build_chords
@@ -16,7 +17,7 @@ metric determines how to optimize the voice leading
 target_pcs are target pitch classes
 extra_constraints: optional callback (solver, voices) -> None for per-example constraints
 """
-def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", ranges=None, optimize=False, extra_constraints=None):
+def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", ranges=None, optimize=False, extra_constraints=None, edo=12):
 
     # specifies allowed MIDI key ranges for each voice.
     if not ranges:
@@ -94,36 +95,59 @@ def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", 
         # Traditional counterpoint rules
         #
 
-        # # Rule A: No Voice Crossing (Geometry rule, but also classical)
-        # for i in range(num_voices-1):
-        #     opt.add(target_voices[i] < target_voices[i+1])
+        # Rule B: Spacing — upper adjacent voices at most one octave apart.
+        # Linear: difference of two Z3 Int variables compared to a constant.
+        opt.add(voices[t][2] - voices[t][1] <= edo)
+        opt.add(voices[t][3] - voices[t][2] <= edo)
 
-        # # Rule B: Spacing (Max an octave between adjacent upper voices)
-        # # Tenor/Alto and Alto/Soprano should be <= 12 semitones apart.
-        # opt.add(target_voices[2] - target_voices[1] <= 12)
-        # opt.add(target_voices[3] - target_voices[2] <= 12)
+        if t > 0:
+            # Rule C: Resolve the Leading Tone.
+            # Any voice on the leading tone (one step below the tonic) must step
+            # up by one semitone in the next chord.
+            # Linear: each Implies is over concrete-valued antecedents (equality
+            # with a Python int), so the solver sees only linear constraints.
+            tonic_pc = progression_pcs[0][0]  # root of the first chord = tonic
+            leading_tone_pc = (tonic_pc - 1) % edo
+            for v in range(num_voices):
+                minv, maxv = ranges[v]
+                leading_tone_notes = get_valid_midi_notes(leading_tone_pc, minv, maxv, edo=edo)
+                for lt_note in leading_tone_notes:
+                    opt.add(Implies(
+                        voices[t-1][v] == lt_note,
+                        voices[t][v] == lt_note + 1
+                    ))
 
-        # # Rule C: Resolve the Leading Tone
-        # # In G -> C, the note B (pitch class 11) MUST resolve up to C (+1 semitone)
-        # for i in range(num_voices):
-        #     if start_chord[i] % 12 == 11:
-        #         opt.add(target_voices[i] == start_chord[i] + 1)
+            # Rule D: Forbid Parallel Perfect 5ths and Parallel Octaves.
+            # Classical counterpoint applies this only to adjacent voice pairs
+            # (bass-tenor, tenor-alto, alto-soprano). Applying it to all pairs
+            # is overly strict and causes UNSAT in dense voicings.
+            # Linear: we enumerate all concrete difference values congruent to the
+            # interval mod edo, avoiding any nonlinear modulo on Z3 Int variables.
 
-        # # Rule D: Forbid Parallel 5ths and Octaves
-        # for i in range(3):
-        #     for j in range(i+1, 4):
-        #         start_interval = (start_chord[j] - start_chord[i]) % 12
-                
-        #         # If the starting interval is a perfect 5th (7) or octave (0)
-        #         if start_interval == 7 or start_interval == 0:
-        #             target_interval = (target_voices[j] - target_voices[i]) % 12
-                    
-        #             # Check if both voices actually moved
-        #             v_i_moved = target_voices[i] != start_chord[i]
-        #             v_j_moved = target_voices[j] != start_chord[j]
-                    
-        #             # If both moved, the target interval CANNOT be the same perfect interval
-        #             opt.add(Implies(And(v_i_moved, v_j_moved), target_interval != start_interval))
+
+            # in 12-EDO yields 7
+            perfect_fifth = round(edo * math.log2(3 / 2))
+            for i in range(num_voices - 1):
+                j = i + 1  # adjacent voices only
+                prev_i = voices[t-1][i]
+                prev_j = voices[t-1][j]
+                curr_i = voices[t][i]
+                curr_j = voices[t][j]
+                both_moved = And(curr_i != prev_i, curr_j != prev_j)
+
+                # Differences are positive due to the no-voice-crossing constraint.
+                prev_diff = prev_j - prev_i
+                curr_diff = curr_j - curr_i
+                max_diff = ranges[j][1] - ranges[i][0]
+
+                for interval in [perfect_fifth, edo]:  # P5, P8
+                    parallel_conditions = []
+                    for d in range(interval, max_diff + 1, edo):
+                        parallel_conditions.append(
+                            And(prev_diff == d, curr_diff == d)
+                        )
+                    if parallel_conditions:
+                        opt.add(Implies(both_moved, Not(Or(parallel_conditions))))
 
 
     #
@@ -230,7 +254,7 @@ if __name__ == "__main__":
     #     2: (53, 72), # Alto: F3 to C5
     #     3: (60, 84)  # Soprano: C4 to C6
     # }
-    # sequence_data = generate_efficient_voice_leading(Cmaj, cmaj_pcs, metric="L1", ranges=voice_ranges, optimize=True)
+    # sequence_data = generate_efficient_voice_leading(Cmaj, cmaj_pcs, metric="L1", ranges=voice_ranges, optimize=True, edo=12)
     # export_to_music21(sequence_data, output_name="cmaj", save_midi=True, display=True)
     # export_scala_file(12, "12_EDO")
 
@@ -245,7 +269,7 @@ if __name__ == "__main__":
     # D major in 4 voices: D3(50), A3(57), D4(62), F#4(66)
     Dmaj = [50, 57, 62, 66]
     pachelbel_ranges = {
-        0: (43, 54),  # Bass: D2 to F#3
+        0: (38, 53),  # Bass: D2 to F#3
         1: (50, 66),  # Tenor: D3 to F#4
         2: (54, 73),  # Alto: F#3 to C#5
         3: (62, 81),  # Soprano: D4 to A5
@@ -259,6 +283,6 @@ if __name__ == "__main__":
             bass_candidates = get_valid_midi_notes(root_pc, bass_min, bass_max)
             opt.add(Or([voices[t][0] == note for note in bass_candidates]))
 
-    sequence_data = generate_efficient_voice_leading(Dmaj, pachelbel_pcs, metric="L1", ranges=pachelbel_ranges, optimize=True, extra_constraints=pachelbel_constraints)
+    sequence_data = generate_efficient_voice_leading(Dmaj, pachelbel_pcs, metric="L1", ranges=pachelbel_ranges, optimize=True, extra_constraints=pachelbel_constraints, edo=12)
     export_to_music21(sequence_data, output_name="pachelbel", save_midi=True, display=True)
     export_scala_file(12, "12_EDO")
