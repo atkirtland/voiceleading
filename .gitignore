@@ -4,3 +4,4 @@ __pycache__/
 *.scl
 temp.py
 temp/
+output/

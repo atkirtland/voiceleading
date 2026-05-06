@@ -1,7 +1,11 @@
 import itertools
 
-def build_universal_scale(edo, generators, dimensions, chain_starts=None):
-    """Generates the scale pitches based on 1D or multi-dimensional generators."""
+def build_universal_scale(edo, generators, dimensions, chain_starts=None, tonic=0):
+    """Generates the scale pitches based on 1D or multi-dimensional generators.
+    
+    tonic: pitch class offset for the root of the scale (e.g. 2 for D, 7 for G).
+    chain_starts: controls the mode/rotation (e.g. -1 for Ionian, -4 for Aeolian).
+    """
     if chain_starts is None:
         chain_starts = [0] * len(generators)
 
@@ -12,7 +16,9 @@ def build_universal_scale(edo, generators, dimensions, chain_starts=None):
         pitch = sum(c * g for c, g in zip(coords, generators)) % edo
         pitches.add(pitch)
 
-    pitches = sorted(list(pitches))
+    # Apply tonic as a pure transposition after scale generation, so it
+    # doesn't interact with the chain_starts mode offset.
+    pitches = sorted([(p + tonic) % edo for p in pitches])
     steps = [pitches[i + 1] - pitches[i] for i in range(len(pitches) - 1)]
     steps.append(edo - pitches[-1])
     unique_steps = sorted(list(set(steps)), reverse=True)
@@ -25,18 +31,25 @@ def build_universal_scale(edo, generators, dimensions, chain_starts=None):
         "Generators": generators
     }
 
-def build_chords(scale_pitches, edo, chord_size=3):
+def build_chords(scale_pitches, edo, chord_size=3, tonic=0):
     """
     Builds chords by stacking scale-thirds (skipping every other scale degree).
     chord_size=3 creates triads. chord_size=4 creates 7th chords.
+    tonic: the pitch class of the scale root, so that I is rooted on the tonic.
     """
     n = len(scale_pitches)
     chords = []
-    
-    for root_idx in range(n):
+
+    # Rotate so that the tonic is at index 0
+    if tonic in scale_pitches:
+        tonic_idx = scale_pitches.index(tonic)
+    else:
+        tonic_idx = 0
+
+    for degree in range(n):
+        root_idx = (tonic_idx + degree) % n
         chord = []
         for k in range(chord_size):
-            # Skip every other note in the sorted scale
             degree_idx = (root_idx + 2 * k) % n
             pitch = scale_pitches[degree_idx]
             chord.append(pitch)

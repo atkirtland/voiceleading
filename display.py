@@ -1,6 +1,8 @@
 from pathlib import Path
 import music21 as m21
 
+OUTPUT_DIR = Path(__file__).parent / "output"
+
 def export_to_music21(sequence, output_name="voice_leading", save_midi=True, display=False):
     """
     Converts a sequence of Z3 MIDI chords into a standard SATB score and MIDI file.
@@ -50,9 +52,15 @@ def export_to_music21(sequence, output_name="voice_leading", save_midi=True, dis
     #
     # Output
     #
+    OUTPUT_DIR.mkdir(exist_ok=True)
+
+    musicxml_path = OUTPUT_DIR / f"{output_name}.musicxml"
+    score.write('musicxml', fp=str(musicxml_path))
+    print(f"MusicXML saved to: {musicxml_path}")
+
     if save_midi:
-        midi_path = f"{output_name}.mid"
-        score.write('midi', fp=midi_path)
+        midi_path = OUTPUT_DIR / f"{output_name}.mid"
+        score.write('midi', fp=str(midi_path))
         print(f"MIDI saved to: {midi_path}")
     
     if display:
@@ -63,10 +71,11 @@ def export_scala_file(edo, filename="tuning"):
     """
     Generates a Scala (.scl) file for a given Equal Temperament system.
     """
-    filepath = f"{filename}.scl"
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    filepath = OUTPUT_DIR / f"{filename}.scl"
     cents_per_step = 1200.0 / edo
     
-    with open(filepath, 'w') as f:
+    with open(str(filepath), 'w') as f:
         # 1. Standard Scala header
         f.write(f"! {filename}.scl\n")
         f.write(f"! Generated from Z3 optimization\n")

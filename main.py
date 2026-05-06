@@ -14,8 +14,9 @@ def get_valid_midi_notes(pitch_class, min_midi, max_midi, edo=12):
 start_chord is the chord in MIDI numbers (e.g. 60 for C4)
 metric determines how to optimize the voice leading
 target_pcs are target pitch classes
+extra_constraints: optional callback (solver, voices) -> None for per-example constraints
 """
-def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", ranges=None, optimize=False):
+def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", ranges=None, optimize=False, extra_constraints=None):
 
     # specifies allowed MIDI key ranges for each voice.
     if not ranges:
@@ -126,6 +127,13 @@ def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", 
 
 
     #
+    # Per-example constraints
+    #
+
+    if extra_constraints:
+        extra_constraints(opt, voices)
+
+    #
     # Optimization
     #
 
@@ -206,29 +214,51 @@ def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", 
 NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
 
 if __name__ == "__main__":
-    diatonic_12 = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1]}
-    scale_12 = build_universal_scale(**diatonic_12)
-    chords_12 = build_chords(scale_12["Pitches"], edo=12, chord_size=3)
-    diatonic_12_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_12)}
-    # C Major (I) -> A Minor (vi) -> F Major (IV) -> G Major (V) -> C Major (I)
-    progression = ["I", "VI", "IV", "V", "I"]
-    Cmajprog_pcs = [diatonic_12_chords[numeral] for numeral in progression]
 
-    # C Major in 4 voices: C3 (48), G3 (55), C4 (60), E4 (64)
-    Cmaj = [48, 55, 60, 64]
+    # # example 1: C major progression
+    # diatonic_cmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
+    # scale_cmaj = build_universal_scale(**diatonic_cmaj)
+    # chords_cmaj = build_chords(scale_cmaj["Pitches"], edo=12, chord_size=3, tonic=0)
+    # diatonic_cmaj_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_cmaj)}
+    # # C Major (I) -> A Minor (vi) -> F Major (IV) -> G Major (V) -> C Major (I)
+    # cmaj_progression = ["I", "VI", "IV", "V", "I"]
+    # cmaj_pcs = [diatonic_cmaj_chords[numeral] for numeral in cmaj_progression]
+    # Cmaj = [48, 55, 60, 64]  # C3 G3 C4 E4
+    # voice_ranges = {
+    #     0: (36, 53), # Bass: C2 to F3
+    #     1: (48, 65), # Tenor: C3 to F4
+    #     2: (53, 72), # Alto: F3 to C5
+    #     3: (60, 84)  # Soprano: C4 to C6
+    # }
+    # sequence_data = generate_efficient_voice_leading(Cmaj, cmaj_pcs, metric="L1", ranges=voice_ranges, optimize=True)
+    # export_to_music21(sequence_data, output_name="cmaj", save_midi=True, display=True)
+    # export_scala_file(12, "12_EDO")
 
-    voice_ranges = {
-        0: (36, 53), # Bass: C2 to F3
-        1: (48, 65), # Tenor: C3 to F4
-        2: (53, 72), # Alto: F3 to C5
-        3: (60, 84)  # Soprano: C4 to C6
+    # Pachelbel's Canon in D major
+    diatonic_dmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 2}
+    scale_dmaj = build_universal_scale(**diatonic_dmaj)
+    chords_dmaj = build_chords(scale_dmaj["Pitches"], edo=12, chord_size=3, tonic=2)
+    diatonic_dmaj_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_dmaj)}
+
+    pachelbel_progression = ["I", "V", "VI", "III", "IV", "I", "IV", "V"]
+    pachelbel_pcs = [diatonic_dmaj_chords[numeral] for numeral in pachelbel_progression]
+    # D major in 4 voices: D3(50), A3(57), D4(62), F#4(66)
+    Dmaj = [50, 57, 62, 66]
+    pachelbel_ranges = {
+        0: (43, 54),  # Bass: D2 to F#3
+        1: (50, 66),  # Tenor: D3 to F#4
+        2: (54, 73),  # Alto: F#3 to C#5
+        3: (62, 81),  # Soprano: D4 to A5
     }
 
-    sequence_data = generate_efficient_voice_leading(Cmaj, Cmajprog_pcs, metric="L1", ranges=voice_ranges, optimize=True)
-    export_to_music21(sequence_data, save_midi=True, display=True)
-    export_scala_file(12, "12_EDO")
+    def pachelbel_constraints(opt, voices):
+        # Pin the bass to the root of each chord (ground bass / basso ostinato)
+        for t, chord_pcs in enumerate(pachelbel_pcs):
+            root_pc = chord_pcs[0]
+            bass_min, bass_max = pachelbel_ranges[0]
+            bass_candidates = get_valid_midi_notes(root_pc, bass_min, bass_max)
+            opt.add(Or([voices[t][0] == note for note in bass_candidates]))
 
-    # G2, D3, G3, B3
-    Gmaj = [43, 50, 55, 59]
-    # C, E, G
-    Cmaj_pcs = [0, 4, 7]
+    sequence_data = generate_efficient_voice_leading(Dmaj, pachelbel_pcs, metric="L1", ranges=pachelbel_ranges, optimize=True, extra_constraints=pachelbel_constraints)
+    export_to_music21(sequence_data, output_name="pachelbel", save_midi=True, display=True)
+    export_scala_file(12, "12_EDO")
