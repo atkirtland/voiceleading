@@ -4,24 +4,24 @@ from display import export_to_music21, export_scala_file
 from chords import build_universal_scale, build_chords
 
 
-"""
-Given an EDO, returns MIDI keys within a pitch class between a minimum and maximum specified specified value.
-"""
 def get_valid_midi_notes(pitch_class, min_midi, max_midi, edo=12):
+    """Given an EDO, returns MIDI keys within a pitch class between a minimum and maximum specified specified value."""
     return [note for note in range(min_midi, max_midi + 1) if note % edo == pitch_class]
 
-"""
-start_chord: the chord in MIDI numbers (e.g. 60 for C4)
-progression_pcs: the sequence of pitch classes the voices must be in at each time step
-metric: L1, L2 (not guaranteed to find global minima, only a feasible solution due to Z3), or Linf (unimplemented)
-ranges: specified MIDI ranges allowed for each voice. Useful for optimization and replicating known pieces.
-optimize: whether to use Optimize or Solve (with a heuristic). Solve is faster, but Optimize yields much better solutions and is not too slow.
-extra_constraints: additional Z3 constraits used in the examples to achieve results resembling known works. E.g. for synthesizing something like Pachelbel's canon, this constrains the bass line.
-edo: how many units we divide the octave into.
-
-returns: a sequence of 4 MIDI pitches at each timestep that lie within the progression_pcs pitch classes, begin with start_chord, and optimize the specifie metric.
-"""
 def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", ranges=None, optimize=True, extra_constraints=None, edo=12):
+    """
+    Args:
+        start_chord: the chord in MIDI numbers (e.g. 60 for C4)
+        progression_pcs: the sequence of pitch classes the voices must be in at each time step
+        metric: L1, L2 (not guaranteed to find global minima, only a feasible solution due to Z3), or Linf (unimplemented)
+        ranges: specified MIDI ranges allowed for each voice. Useful for optimization and replicating known pieces.
+        optimize: whether to use Optimize or Solve (with a heuristic). Solve is faster, but Optimize yields much better solutions and is not too slow.
+        extra_constraints: additional Z3 constraits used in the examples to achieve results resembling known works. E.g. for synthesizing something like Pachelbel's canon, this constrains the bass line.
+        edo: how many units we divide the octave into.
+
+    Returns:
+        a sequence of 4 MIDI pitches at each timestep that lie within the progression_pcs pitch classes, begin with start_chord, and optimize the specifie metric.
+    """
 
     # specifies allowed MIDI key ranges for each voice.
     if not ranges:

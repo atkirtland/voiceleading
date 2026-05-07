@@ -7,22 +7,17 @@ class TestMicrotonalMidi(unittest.TestCase):
 
     def test_31edo_chromatic_scale_has_nonzero_pitchbend(self):
         """
-        Walk all 31 steps from C4 to C5 in 31-EDO (a full chromatic octave),
-        with all four voices in unison so the gradual pitch climb is clearly
-        audible when played back.
-
-        19 of the 31 steps land between 12-EDO semitones, so the pitchwheel
-        messages for those steps must be non-zero to tune them correctly.
+        Verify that the microtonal MIDI output works correctly using pitch bends by writing a 31-tone chromatic scale in 31-EDO from C4 to C5. The correctness can be verified by ear.
         """
         # 124 = C4 in 31-EDO (4 octaves * 31 steps/octave)
         c4 = 124
-        sequence = [[c4 + step] * 4 for step in range(32)]  # C4 up to C5 inclusive
+        # C4 to C5 inclusive
+        sequence = [[c4 + step] * 4 for step in range(32)]
         export_microtonal_midi(sequence, output_name="test_31edo_chromatic", edo=31)
 
         midi_path = OUTPUT_DIR / "test_31edo_chromatic_microtonal.mid"
         mid = mido.MidiFile(str(midi_path))
 
-        # Collect all pitchwheel values across all voice tracks
         all_bends = [
             msg.pitch
             for track in mid.tracks
@@ -37,10 +32,7 @@ class TestMicrotonalMidi(unittest.TestCase):
             f"Bends found: {all_bends}"
         )
 
-        # Verify the exact count of non-zero bends.
-        # 31-EDO and 12-EDO share a common pitch only at the octave boundaries
-        # (steps 0 and 31 = C4 and C5). All 30 steps in between are microtonal,
-        # so across 4 voices that's 30 * 4 = 120 non-zero bend messages.
+        # We verify the correctness of the calculated pitch bends by ensuring there are exactly 30*4=120 nonzero bends. Because 12 and 31 are coprime, the bends align to be 0 only at the octave boundaries. So despite there being (31+1)*4=128 total tones, 120 of them have nonzero bends.
         nonzero_bends = [b for b in all_bends if b != 0]
         self.assertEqual(
             len(nonzero_bends), 30 * 4,

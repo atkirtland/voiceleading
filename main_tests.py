@@ -6,10 +6,8 @@ NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
 
 EXPECTED_BASS = [50, 45, 47, 42, 43, 38, 43, 45]
 
-"""
-Tests that the bass line found by the Pachelbel's canon example does have the right pitches, the ones specified in `EXPECTED_BASS` above.
-"""
 class TestPachelbelBassLine(unittest.TestCase):
+    """Tests that the bass line found by the Pachelbel's canon example does have the right pitches, the ones specified in `EXPECTED_BASS` above."""
 
     def test_bass_line(self):
         diatonic_dmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 2}
@@ -45,10 +43,8 @@ class TestPachelbelBassLine(unittest.TestCase):
         self.assertEqual(bass_line, EXPECTED_BASS)
 
 
-"""
-Ensures that the synthesized I-IV-VII-III-VI-II-V-I voice leading for the C major scale correctly has that the root of each chord is a fifth after the previous chord root. I.e. they form a Circle of Fifths.
-"""
 class TestCircleOfFifthsStructure(unittest.TestCase):
+    """Ensures that the synthesized I-IV-VII-III-VI-II-V-I voice leading for the C major scale correctly has that the root of each chord is a fifth after the previous chord root. I.e. they form a Circle of Fifths."""
 
     def test_roots_descend_by_diatonic_fifth(self):
         diatonic_cmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
