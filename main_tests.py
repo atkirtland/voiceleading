@@ -6,7 +6,9 @@ NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
 
 EXPECTED_BASS = [50, 45, 47, 42, 43, 38, 43, 45]
 
-
+"""
+Tests that the bass line found by the Pachelbel's canon example does have the right pitches, the ones specified in `EXPECTED_BASS` above.
+"""
 class TestPachelbelBassLine(unittest.TestCase):
 
     def test_bass_line(self):
@@ -43,13 +45,12 @@ class TestPachelbelBassLine(unittest.TestCase):
         self.assertEqual(bass_line, EXPECTED_BASS)
 
 
+"""
+Ensures that the synthesized I-IV-VII-III-VI-II-V-I voice leading for the C major scale correctly has that the root of each chord is a fifth after the previous chord root. I.e. they form a Circle of Fifths.
+"""
 class TestCircleOfFifthsStructure(unittest.TestCase):
 
     def test_roots_descend_by_diatonic_fifth(self):
-        """The defining property of a circle-of-fifths progression: each chord root
-        is a diatonic fifth (3 scale degrees) below the previous one. In a major scale
-        this is 7 semitones everywhere except IV→VII, where the diatonic fifth is
-        diminished (6 semitones) — the one tritone in the scale."""
         diatonic_cmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
         scale_cmaj = build_universal_scale(**diatonic_cmaj)
         chords_cmaj = build_chords(scale_cmaj["Pitches"], edo=12, chord_size=3, tonic=0)
@@ -57,7 +58,8 @@ class TestCircleOfFifthsStructure(unittest.TestCase):
         circle_progression = ["I", "IV", "VII", "III", "VI", "II", "V", "I"]
         circle_pcs = [diatonic_cmaj_chords[numeral] for numeral in circle_progression]
 
-        scale_pcs = scale_cmaj["Pitches"]  # ordered list of pitch classes in the scale
+        # ordered list of pitch classes in the scale
+        scale_pcs = scale_cmaj["Pitches"]
         n = len(scale_pcs)
 
         for i in range(len(circle_pcs) - 1):
@@ -65,8 +67,8 @@ class TestCircleOfFifthsStructure(unittest.TestCase):
             curr_root = circle_pcs[i + 1][0]
             prev_idx = scale_pcs.index(prev_root)
             curr_idx = scale_pcs.index(curr_root)
-            # Descending by a diatonic fifth = moving back 4 scale steps (mod 7).
-            # A fifth spans 5 note names (e.g. C–B–A–G–F), so 4 steps separate root from root.
+
+            # a fifth is 4 scale steps
             descent_in_degrees = (prev_idx - curr_idx) % n
             self.assertEqual(
                 descent_in_degrees, 4,

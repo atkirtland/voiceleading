@@ -1,11 +1,22 @@
 import itertools
 
+"""
+Generates the sequence of pitch classes in a scale, defined by:
+
+- `edo` (equal divisions of the octave): how many pitches are in one octave
+- `generators`: A mathematical tool used to generate the scales.
+- `dimenions`: the number of notes along each axis. E.g. for diatonic scales, is `[7]`; for pentatonic scales, is `[5]`.
+- `chain_starts`: the initial note along each axis. Effectively controls the mode, e.g. with diatonic scales, `[-1]` for Ionian and `[-4]` for Aeolian.
+- `tonic`: amount mod `edo` to add to each of the notes. `0` by default. E.g. for getting the `D` instead of `C` major diatonic scale, `tonic` should be `2`.
+
+Returns: a dictionary specifying
+- EDO: input argument
+- Pitches: sorted list of pitches between 0 and EDO, e.g. for D major is [1, 2, 4, 6, 7, 9, 11]
+- Steps: the steps between each of the pitches
+- Step sizes:
+- Generators: input argument
+"""
 def build_universal_scale(edo, generators, dimensions, chain_starts=None, tonic=0):
-    """Generates the scale pitches based on 1D or multi-dimensional generators.
-    
-    tonic: pitch class offset for the root of the scale (e.g. 2 for D, 7 for G).
-    chain_starts: controls the mode/rotation (e.g. -1 for Ionian, -4 for Aeolian).
-    """
     if chain_starts is None:
         chain_starts = [0] * len(generators)
 
@@ -31,16 +42,21 @@ def build_universal_scale(edo, generators, dimensions, chain_starts=None, tonic=
         "Generators": generators
     }
 
+"""
+Using the output of build_universal_scale, generate the set of scale degree chords. These are numbered with Roman numberals, which we use for defining chord progressions in `main.py`. Concretely,
+
+- `scale_pitches`: the set of pitches in the scale
+- `edo`
+- `chord_size`: the number of notes in each chord. 3 is the default, 4 is for v7 chords.
+- `tonic`: because the Pitches returned by `build_universal_scale` is sorted, we have to index into it to find the index of the actual first pitch, `tonic`.
+
+Returns: list of lists of integers representing pitch classes
+"""
 def build_chords(scale_pitches, edo, chord_size=3, tonic=0):
-    """
-    Builds chords by stacking scale-thirds (skipping every other scale degree).
-    chord_size=3 creates triads. chord_size=4 creates 7th chords.
-    tonic: the pitch class of the scale root, so that I is rooted on the tonic.
-    """
     n = len(scale_pitches)
     chords = []
 
-    # Rotate so that the tonic is at index 0
+    # Get the index of the tonic, as that should be the root of the first chord.
     if tonic in scale_pitches:
         tonic_idx = scale_pitches.index(tonic)
     else:
@@ -50,6 +66,7 @@ def build_chords(scale_pitches, edo, chord_size=3, tonic=0):
         root_idx = (tonic_idx + degree) % n
         chord = []
         for k in range(chord_size):
+            # TODO might want to allow flexibility in the 2 for non-12 EDO scales
             degree_idx = (root_idx + 2 * k) % n
             pitch = scale_pitches[degree_idx]
             chord.append(pitch)
