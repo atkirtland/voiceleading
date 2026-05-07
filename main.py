@@ -1,3 +1,6 @@
+"""
+This file contains the core modeling code, and defines how to synthesize a voice leading from a list of scale degree chords and an initial chord.
+"""
 import math
 from z3 import *
 

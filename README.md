@@ -64,7 +64,7 @@ Tested on Python 3.9.25, install requirements with `pip install -r requirements.
 
 The 12-EDO (just intonation) MIDI files can be opened with any standard MIDI player. Microtonal music may not be played correctly with all MIDI players due to the pitch bends, but one piece of software that can play it correctly is [FluidSynth](https://github.com/FluidSynth/fluidsynth) with commands such as `fluidsynth -a alsa /usr/share/sounds/sf2/FluidR3_GM.sf2 output/test_31edo_chromatic_microtonal.mid`.
 
-The core set of examples can be run with `python main.py` from the root directory by uncommenting the code of the desired example. The tests can be run with `python main_tests.py`, `python display_tests.py`, and `python chords_tests.py`.
+The core set of examples can be run with `python examples/<filename>` from the root directory by uncommenting the code of the desired example. The tests can be run with `python main_tests.py`, `python chords_tests.py`, and `python display_tests.py`.
 
 ## Takeaways
 

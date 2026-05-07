@@ -1,3 +1,6 @@
+"""
+This file is fairly sparse because the output can also be verified by listening to the produced MIDI / musicxml files. And it is tangential to the modeling task.
+"""
 import unittest
 import mido
 from display import export_microtonal_midi, BEND_SEMITONES, OUTPUT_DIR

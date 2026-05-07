@@ -1,3 +1,6 @@
+"""
+This is the code that generates the MIDI and musicxml files.
+"""
 from pathlib import Path
 import music21 as m21
 import mido
