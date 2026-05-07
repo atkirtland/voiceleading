@@ -184,19 +184,23 @@ def generate_efficient_voice_leading(start_chord, progression_pcs, metric="L1", 
 
             step_distances.append(dist_var)
 
-    total_distance = Sum(step_distances)
+    # Add this check in to cover the edge case of a single timestep progresion (should be only the start chord)
+    if step_distances:
+        total_distance = Sum(step_distances)
 
-    if optimize:
-        opt.minimize(total_distance)
+        if optimize:
+            opt.minimize(total_distance)
+        else:
+            if metric == "L1":
+                # Allow an average of 3 semitones per voice per step
+                max_acceptable_distance = num_voices * (num_chords - 1) * 3
+            elif metric == "L2":
+                max_acceptable_distance = num_voices * (num_chords - 1) * 9
+
+            # satisfice
+            opt.add(total_distance <= max_acceptable_distance)
     else:
-        if metric == "L1":
-            # Allow an average of 3 semitones per voice per step
-            max_acceptable_distance = num_voices * (num_chords - 1) * 3
-        elif metric == "L2":
-            max_acceptable_distance = num_voices * (num_chords - 1) * 9 
-
-        # satisfice
-        opt.add(total_distance <= max_acceptable_distance)
+        total_distance = IntVal(0)
 
     #
     # Solve and Output

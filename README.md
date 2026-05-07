@@ -4,10 +4,15 @@ TLDR: We allow for synthesizing voice leadings (specifically a set of notes, one
 
 ## Background math
 
-Some relevant mathematical details are
-- [Equal divisions of the octave (EDO) = equal temperament](https://en.xen.wiki/w/Equal-step_tuning): this is set of microtonal scales we support. Essentially, instead of dividing an octave (a set of pitches that range from $f_0$ to $2f_0$, i.e. a doubling in pitch) into 12 pieces, $n$-EDO systems divide them into $n$ pieces.
+Some relevant vocabulary:
+- Voice: a linear sequence of notes
+- Chord: a set of notes played at once.
+- Voice leading: an ordered set of voices, which defines a chord at each timestep. We typically have 4 voices present, bass, tenor, alto, and soprano.
+- Scale: A linear sequence of notes that loops back to the beginning
+- Scale degree chords: Chords produced from scales. The $n$th scale degree chord is produced by taking the $n$th scale note and stacking on it the $n+2$th and $n+4$th notes in the scale (mod scale length) to produce a chord.
+- [Equal divisions of the octave (EDO) = equal temperament](https://en.xen.wiki/w/Equal-step_tuning): these are the microtonal tuning sytems we support. Essentially, instead of dividing an octave (a set of pitches that range from $f_0$ to $2f_0$, i.e. a doubling in pitch) into 12 pieces, $n$-EDO systems divide them into $n$ pieces.
 - [Moment of symmetry scales](https://en.xen.wiki/w/MOS_scale): we use this framework, generalized to 2+ dimensions, to generate scales in `chords.py`. These essentially just generate a linear sequence of tones in an EDO system given a set of basic mathematical data. We choose this system because it is general and relatively simple.
-- [Counterpoint](https://en.wikipedia.org/wiki/Counterpoint): we implement a couple of counterpoint rules, but we do not make this an emphasis of the project (in part because it was the suggested project idea of another team on EdStem), nor do we follow any particular set of counterpoint rules. We did not do analysis as to how the synthesized music changes with the inclusion/exclusion of the counterpoint rules.
+- [Counterpoint](https://en.wikipedia.org/wiki/Counterpoint): we implement a couple of counterpoint rules to attempt to constrain the voice leading synthesis to be more interesting. However, we do not make this an emphasis of the project (in part because it was the suggested project idea of another team on EdStem), nor do we follow any particular set of counterpoint rules. We did not do analysis as to how the synthesized music changes with the inclusion/exclusion of the counterpoint rules.
 
 ## Goals
 
