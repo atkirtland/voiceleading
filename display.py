@@ -175,6 +175,9 @@ def export_to_music21(sequence, output_name="voice_leading", save_midi=True, dis
         print("Opening sheet music visualization...")
         score.show()
 
+"""
+This is not currently in use- scl files can potentially support "purer" microtonal MIDI files without using pitch bends, but so far we have only used and tested the pitch bend MIDI files produced with other functions in this file.
+"""
 def export_scala_file(edo, filename="tuning"):
     """
     Generates a Scala (.scl) file for a given Equal Temperament system.
