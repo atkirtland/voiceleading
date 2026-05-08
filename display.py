@@ -1,5 +1,5 @@
 """
-This is the code that generates the MIDI and musicxml files.
+This is the code that generates the MIDI and musicxml files. Unlike the other files, the comments in this file were primarily written by Gemini as it is visualization code.
 """
 from pathlib import Path
 import music21 as m21
@@ -105,6 +105,8 @@ def export_to_music21(sequence, output_name="voice_leading", save_midi=True, dis
 
     For non-12-EDO tunings, also writes a separate multichannel pitch-bend MIDI
     (via export_microtonal_midi) so the microtonality is audible in any softsynth.
+
+    display specifies whether to automatically open in the given MusicXML reader
     """
 
     #

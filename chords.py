@@ -3,7 +3,7 @@ This file contains functions to generate scales and the scale degree chords defi
 """
 import itertools
 
-def build_universal_scale(edo, generators, dimensions, chain_starts=None, tonic=0):
+def build_scale(edo, generators, dimensions, chain_starts=None, tonic=0):
     """
     Generates the sequence of pitch classes in a scale.
 
@@ -49,14 +49,14 @@ def build_universal_scale(edo, generators, dimensions, chain_starts=None, tonic=
 
 def build_chords(scale_pitches, edo, chord_size=3, tonic=0):
     """
-    Using the output of build_universal_scale, generate the set of scale degree chords.
+    Using the output of build_scale, generate the set of scale degree chords.
     These are numbered with Roman numerals, which we use for defining chord progressions in `main.py`.
 
     Args:
         scale_pitches: the set of pitches in the scale
         edo: equal divisions of the octave
         chord_size: the number of notes in each chord. 3 is the default, 4 is for v7 chords.
-        tonic: because the Pitches returned by `build_universal_scale` is sorted, we have to index into it to find the index of the actual first pitch, `tonic`.
+        tonic: because the Pitches returned by `build_scale` is sorted, we have to index into it to find the index of the actual first pitch, `tonic`.
 
     Returns:
         list of lists of integers representing pitch classes

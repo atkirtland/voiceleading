@@ -1,5 +1,5 @@
 import unittest
-from chords import build_universal_scale, build_chords
+from chords import build_scale, build_chords
 
 class TestChords(unittest.TestCase):
 
@@ -7,7 +7,7 @@ class TestChords(unittest.TestCase):
         """
         Tests that building C major produces the right pitches and chords.
         """
-        scale = build_universal_scale(
+        scale = build_scale(
             edo=12,
             generators=[7],
             dimensions=[7],
@@ -43,7 +43,7 @@ class TestChords(unittest.TestCase):
         """
         As above, but for seventh chords.
         """
-        scale = build_universal_scale(
+        scale = build_scale(
             edo=12,
             generators=[7],
             dimensions=[7],
@@ -80,7 +80,7 @@ class TestChords(unittest.TestCase):
         """
         Verify that the steps and step sizes in 12-EDO diatonic scales are correct (are 1 and 2).
         """
-        scale = build_universal_scale(
+        scale = build_scale(
             edo=12,
             generators=[7],
             dimensions=[7],
@@ -103,7 +103,7 @@ class TestChords(unittest.TestCase):
         """
         Similar tests as above, but for pentatonic scales/chords.
         """
-        scale = build_universal_scale(
+        scale = build_scale(
             edo=12,
             generators=[7],
             dimensions=[5],
@@ -145,10 +145,10 @@ class TestChords(unittest.TestCase):
             f"Pentatonic chord mismatch.\n  Got:      {chords_mod12}\n  Expected: {expected}"
         )
 
-class TestBuildUniversalScaleInvariants(unittest.TestCase):
+class TestBuildScaleInvariants(unittest.TestCase):
 
     def _make_scale(self, **kwargs):
-        return build_universal_scale(**kwargs)
+        return build_scale(**kwargs)
 
     def test_steps_sum_to_edo(self):
         """Across several choices of scales, the sum of the steps in the scale equals the EDO (ensures the scale loops around)"""
@@ -216,8 +216,8 @@ class TestBuildUniversalScaleInvariants(unittest.TestCase):
 
     def test_tonic_transposition(self):
         """Adding 2 to the tonic actually causes all the found pitches to be shifted up by 2."""
-        base = build_universal_scale(edo=12, generators=[7], dimensions=[7], chain_starts=[-1], tonic=0)
-        transposed = build_universal_scale(edo=12, generators=[7], dimensions=[7], chain_starts=[-1], tonic=2)
+        base = build_scale(edo=12, generators=[7], dimensions=[7], chain_starts=[-1], tonic=0)
+        transposed = build_scale(edo=12, generators=[7], dimensions=[7], chain_starts=[-1], tonic=2)
         expected = sorted([(p + 2) % 12 for p in base["Pitches"]])
         self.assertEqual(transposed["Pitches"], expected)
 
@@ -226,7 +226,7 @@ class TestBuildChordsInvariants(unittest.TestCase):
 
     def setUp(self):
         """C major"""
-        scale = build_universal_scale(
+        scale = build_scale(
             edo=12, generators=[7], dimensions=[7], chain_starts=[-1]
         )
         self.scale_pitches = scale["Pitches"]

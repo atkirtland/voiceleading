@@ -6,11 +6,11 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import generate_efficient_voice_leading, NUMERALS
-from chords import build_universal_scale, build_chords
+from chords import build_scale, build_chords
 from display import export_to_music21, export_scala_file
 
 diatonic_31 = {"edo": 31, "generators": [18], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
-scale_31 = build_universal_scale(**diatonic_31)
+scale_31 = build_scale(**diatonic_31)
 chords_31 = build_chords(scale_31["Pitches"], edo=31, chord_size=3, tonic=0)
 diatonic_31_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_31)}
 print("31-EDO scale pitches:", scale_31["Pitches"])

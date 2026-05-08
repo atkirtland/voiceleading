@@ -1,6 +1,6 @@
 import unittest
 from main import generate_efficient_voice_leading, get_valid_midi_notes
-from chords import build_universal_scale, build_chords
+from chords import build_scale, build_chords
 
 NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
 
@@ -11,7 +11,7 @@ class TestPachelbelBassLine(unittest.TestCase):
 
     def test_bass_line(self):
         diatonic_dmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 2}
-        scale_dmaj = build_universal_scale(**diatonic_dmaj)
+        scale_dmaj = build_scale(**diatonic_dmaj)
         chords_dmaj = build_chords(scale_dmaj["Pitches"], edo=12, chord_size=3, tonic=2)
         diatonic_dmaj_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_dmaj)}
 
@@ -48,7 +48,7 @@ class TestCircleOfFifthsStructure(unittest.TestCase):
 
     def test_roots_descend_by_diatonic_fifth(self):
         diatonic_cmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
-        scale_cmaj = build_universal_scale(**diatonic_cmaj)
+        scale_cmaj = build_scale(**diatonic_cmaj)
         chords_cmaj = build_chords(scale_cmaj["Pitches"], edo=12, chord_size=3, tonic=0)
         diatonic_cmaj_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_cmaj)}
         circle_progression = ["I", "IV", "VII", "III", "VI", "II", "V", "I"]
@@ -76,7 +76,7 @@ class TestGenerateEfficientVoiceLeading(unittest.TestCase):
 
     def setUp(self):
         diatonic_cmaj = {"edo": 12, "generators": [7], "dimensions": [7], "chain_starts": [-1], "tonic": 0}
-        scale_cmaj = build_universal_scale(**diatonic_cmaj)
+        scale_cmaj = build_scale(**diatonic_cmaj)
         chords_cmaj = build_chords(scale_cmaj["Pitches"], edo=12, chord_size=3, tonic=0)
         diatonic_cmaj_chords = {numeral: chord for numeral, chord in zip(NUMERALS, chords_cmaj)}
 
