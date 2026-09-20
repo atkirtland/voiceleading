@@ -58,4 +58,5 @@ We could also have defined the scales and scale degree chords in Z3 along with t
 
 ### AI Use
 
-Gemini Pro generated much of the code via prompting.
+Gemini Pro generated much of the code via prompting with significant human supervision. Almost all the comments were written by me, and I performed rounds of refactoring. `display.py` is the exception in being largely vibe-coded as it involved significant external library use and was testable from appearance.
+
